@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Marquee animation for announcement strip */
+.marquee {
+  animation: marquee 22s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background-color: #FFF4E0;
+  color: #5A3B1C;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF4E0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D9A25F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5A3B1C;
+}
+
+/* Hero Carousel - Remove default backgrounds and spacing */
+.hero-carousel {
+  background: transparent !important;
+}
+
+.hero-carousel .carousel-slider {
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.hero-carousel .slider-wrapper {
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.hero-carousel .slider {
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.hero-carousel .slide {
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.hero-carousel .control-dots {
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.hero-carousel .control-arrow {
+  background: transparent !important;
+}
