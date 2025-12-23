@@ -67,7 +67,7 @@ const CreateProductPage = () => {
           router.push('/login')
           return
         }
-        
+
         const token = localStorage.getItem('token')
         if (!token) {
           router.push('/login')
@@ -82,7 +82,7 @@ const CreateProductPage = () => {
           } else if (res.status === 401) {
             addToast('Your session has expired. Please login again.', 'error')
           }
-          
+
           // Clear token and redirect to login
           if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             localStorage.removeItem('token')
@@ -91,7 +91,7 @@ const CreateProductPage = () => {
           router.push('/login')
           return
         }
-        
+
         const data = await res.json()
         if (data.success && data.data.role === 'admin') {
           setUser(data.data)
@@ -227,12 +227,12 @@ const CreateProductPage = () => {
     try {
       setUploading(true)
       const imageUrl = await uploadImageToServer(file, false)
-      
+
       // Update the additional image files array
       const newFiles = [...additionalImageFiles]
       newFiles[index] = file
       setAdditionalImageFiles(newFiles)
-      
+
       // Update the form with the server URL
       updateImage(index, imageUrl)
       addToast('Additional image uploaded successfully', 'success')
@@ -262,20 +262,20 @@ const CreateProductPage = () => {
     if (!form.image.trim()) errors.push('Main image required')
     if (!form.ingredients.trim()) errors.push('Ingredients required')
     form.sizes.forEach((s, i) => {
-      if (!s.size) errors.push(`Size #${i+1} label required`)
-      if (s.price === '' || isNaN(parseFloat(s.price))) errors.push(`Size #${i+1} price invalid`)
-      if (s.stock === '' || isNaN(parseInt(s.stock))) errors.push(`Size #${i+1} stock invalid`)
+      if (!s.size) errors.push(`Size #${i + 1} label required`)
+      if (s.price === '' || isNaN(parseFloat(s.price))) errors.push(`Size #${i + 1} price invalid`)
+      if (s.stock === '' || isNaN(parseInt(s.stock))) errors.push(`Size #${i + 1} stock invalid`)
     })
-    Object.entries(form.nutrition).forEach(([k,v]) => { if (!v) errors.push(`Nutrition ${k} required`) })
+    Object.entries(form.nutrition).forEach(([k, v]) => { if (!v) errors.push(`Nutrition ${k} required`) })
     return errors
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     const errs = validateClient()
-    if (errs.length) { errs.slice(0,6).forEach(m => addToast(m, 'error')); return }
+    if (errs.length) { errs.slice(0, 6).forEach(m => addToast(m, 'error')); return }
     setSubmitting(true)
-    
+
     try {
       // Prepare payload with proper image handling
       const payload = {
@@ -285,58 +285,21 @@ const CreateProductPage = () => {
         video: form.video?.trim() || ''
       }
 
-      // Use FormData if we have uploaded files, otherwise use JSON
-      const hasUploadedFiles = mainImageFile || additionalImageFiles.some(file => file !== null);
-      
-      let requestOptions;
-      
-      if (hasUploadedFiles) {
-        // Use FormData for multipart upload
-        const formData = new FormData();
-        
-        // Add all form fields
-        Object.keys(payload).forEach(key => {
-          if (key === 'sizes' || key === 'images' || key === 'nutrition') {
-            formData.append(key, JSON.stringify(payload[key]));
-          } else {
-            formData.append(key, payload[key]);
-          }
-        });
-        
-        // Add main image file if exists
-        if (mainImageFile) {
-          formData.append('image', mainImageFile);
-        }
-        
-        // Add additional image files with proper field names
-        additionalImageFiles.forEach((file, index) => {
-          if (file) {
-            formData.append('images', file);
-          }
-        });
-        
-        requestOptions = {
-          method: 'POST',
-          headers: getFileUploadHeaders(),
-          body: formData
-        };
-      } else {
-        // Use JSON for URL-based images
-        requestOptions = {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload)
-        };
-      }
+      // Always use JSON for submission since images are already uploaded via separate endpoints
+      const requestOptions = {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      };
 
       const res = await fetch(`${apiBase}/admin/products/create`, requestOptions);
-      const data = await res.json().catch(()=>({}));
-      
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok && data.success) {
         addToast('Product created successfully', 'success');
         router.push('/admin');
       } else {
-        if (data.errors) data.errors.slice(0,6).forEach(er => addToast(er.msg, 'error'));
+        if (data.errors) data.errors.slice(0, 6).forEach(er => addToast(er.msg, 'error'));
         else addToast(data.message || 'Create failed', 'error');
       }
     } catch (e) {
@@ -354,8 +317,8 @@ const CreateProductPage = () => {
       <div className='flex items-center justify-between mb-8'>
         <h1 className='text-3xl font-bold text-vibe-brown'>Create Product</h1>
         <div className='flex items-center space-x-3'>
-          <button 
-            onClick={() => router.push('/')} 
+          <button
+            onClick={() => router.push('/')}
             className='flex items-center space-x-2 px-4 py-2 rounded-md bg-white border border-vibe-cookie text-vibe-brown hover:bg-vibe-cookie/30 transition-colors'
             title="Go to Home Page"
           >
@@ -369,15 +332,15 @@ const CreateProductPage = () => {
         <section className='bg-white border border-vibe-cookie rounded-lg p-6 space-y-4'>
           <h2 className='text-lg font-semibold text-vibe-brown'>Basic Info</h2>
           <div className='grid md:grid-cols-2 gap-4'>
-            <input className='input' placeholder='Name' value={form.name} onChange={e=>updateField('name', e.target.value)} />
-            <select className='input' value={form.category} onChange={e=>updateField('category', e.target.value)}>
+            <input className='input' placeholder='Name' value={form.name} onChange={e => updateField('name', e.target.value)} />
+            <select className='input' value={form.category} onChange={e => updateField('category', e.target.value)}>
               {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
             </select>
-            
+
             {/* Main Image Section */}
             <div className='md:col-span-2 space-y-3'>
               <label className='block text-sm font-medium text-vibe-brown'>Main Product Image</label>
-              
+
               {/* File Upload Option */}
               <div className='space-y-2'>
                 <div className='flex items-center gap-4'>
@@ -398,7 +361,7 @@ const CreateProductPage = () => {
                       {uploading ? 'Uploading...' : 'Upload from device'}
                     </span>
                   </label>
-                  
+
                   {mainImageFile && (
                     <div className='flex items-center gap-2'>
                       <span className='text-sm text-vibe-brown/70'>{mainImageFile.name}</span>
@@ -412,26 +375,26 @@ const CreateProductPage = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {/* URL Input Option */}
                 <div className='flex items-center gap-2'>
                   <span className='text-sm text-vibe-brown/70'>OR</span>
-                  <input 
-                    className='input flex-1' 
-                    placeholder='Enter Image URL' 
-                    value={mainImageFile ? '' : form.image} 
-                    onChange={e=>updateField('image', e.target.value)}
+                  <input
+                    className='input flex-1'
+                    placeholder='Enter Image URL'
+                    value={mainImageFile ? '' : form.image}
+                    onChange={e => updateField('image', e.target.value)}
                     disabled={!!mainImageFile}
                   />
                 </div>
-                
+
                 {/* Image Preview */}
                 {form.image && (
                   <div className='mt-2'>
                     <div className='relative h-32 w-32 rounded-lg border border-vibe-cookie/30 overflow-hidden'>
-                      <Image 
-                        src={form.image} 
-                        alt='Main product preview' 
+                      <Image
+                        src={form.image}
+                        alt='Main product preview'
                         fill
                         className='object-cover'
                         onError={(e) => {
@@ -455,17 +418,17 @@ const CreateProductPage = () => {
                 )}
               </div>
             </div>
-            
-            <textarea className='input md:col-span-2' rows={3} placeholder='Description' value={form.description} onChange={e=>updateField('description', e.target.value)} />
-            <textarea className='input md:col-span-2' rows={2} placeholder='Ingredients' value={form.ingredients} onChange={e=>updateField('ingredients', e.target.value)} />
-            <input className='input md:col-span-2' placeholder='Product Video URL (optional)' value={form.video} onChange={e=>updateField('video', e.target.value)} />
+
+            <textarea className='input md:col-span-2' rows={3} placeholder='Description' value={form.description} onChange={e => updateField('description', e.target.value)} />
+            <textarea className='input md:col-span-2' rows={2} placeholder='Ingredients' value={form.ingredients} onChange={e => updateField('ingredients', e.target.value)} />
+            <input className='input md:col-span-2' placeholder='Product Video URL (optional)' value={form.video} onChange={e => updateField('video', e.target.value)} />
           </div>
         </section>
 
         <section className='bg-white border border-vibe-cookie rounded-lg p-6 space-y-4'>
           <div className='flex items-center justify-between'>
             <h2 className='text-lg font-semibold text-vibe-brown'>Additional Images (optional)</h2>
-            <button type='button' onClick={addImage} className='flex items-center gap-1 text-sm px-3 py-1 rounded bg-vibe-cookie text-vibe-brown hover:bg-vibe-brown hover:text-white'><Plus className='h-4 w-4'/>Add</button>
+            <button type='button' onClick={addImage} className='flex items-center gap-1 text-sm px-3 py-1 rounded bg-vibe-cookie text-vibe-brown hover:bg-vibe-brown hover:text-white'><Plus className='h-4 w-4' />Add</button>
           </div>
           <div className='space-y-4'>
             {form.images.map((img, idx) => (
@@ -473,16 +436,16 @@ const CreateProductPage = () => {
                 <div className='flex items-center justify-between'>
                   <span className='text-sm font-medium text-vibe-brown'>Image #{idx + 1}</span>
                   {form.images.length > 1 && (
-                    <button 
-                      type='button' 
-                      onClick={() => removeImage(idx)} 
+                    <button
+                      type='button'
+                      onClick={() => removeImage(idx)}
                       className='p-1 text-red-600 hover:text-red-800'
                     >
                       <X className='h-4 w-4' />
                     </button>
                   )}
                 </div>
-                
+
                 {/* File Upload Option */}
                 <div className='space-y-2'>
                   <div className='flex items-center gap-4'>
@@ -503,7 +466,7 @@ const CreateProductPage = () => {
                         {uploading ? 'Uploading...' : 'Upload from device'}
                       </span>
                     </label>
-                    
+
                     {additionalImageFiles[idx] && (
                       <div className='flex items-center gap-2'>
                         <span className='text-xs text-vibe-brown/70'>{additionalImageFiles[idx].name}</span>
@@ -517,26 +480,26 @@ const CreateProductPage = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* URL Input Option */}
                   <div className='flex items-center gap-2'>
                     <span className='text-xs text-vibe-brown/70'>OR</span>
-                    <input 
-                      className='input flex-1' 
-                      placeholder={`Image URL #${idx + 1}`} 
-                      value={additionalImageFiles[idx] ? '' : img} 
+                    <input
+                      className='input flex-1'
+                      placeholder={`Image URL #${idx + 1}`}
+                      value={additionalImageFiles[idx] ? '' : img}
                       onChange={e => updateImage(idx, e.target.value)}
                       disabled={!!additionalImageFiles[idx]}
                     />
                   </div>
-                  
+
                   {/* Image Preview */}
                   {img && (
                     <div className='mt-2'>
                       <div className='relative h-24 w-24 rounded-lg border border-vibe-cookie/30 overflow-hidden'>
-                        <Image 
-                          src={img} 
-                          alt={`Additional product preview ${idx + 1}`} 
+                        <Image
+                          src={img}
+                          alt={`Additional product preview ${idx + 1}`}
                           fill
                           className='object-cover'
                           onError={(e) => {
@@ -555,16 +518,16 @@ const CreateProductPage = () => {
         <section className='bg-white border border-vibe-cookie rounded-lg p-6 space-y-4'>
           <div className='flex items-center justify-between'>
             <h2 className='text-lg font-semibold text-vibe-brown'>Sizes & Pricing</h2>
-            <button type='button' onClick={addSize} className='flex items-center gap-1 text-sm px-3 py-1 rounded bg-vibe-cookie text-vibe-brown hover:bg-vibe-brown hover:text-white'><Plus className='h-4 w-4'/>Add Size</button>
+            <button type='button' onClick={addSize} className='flex items-center gap-1 text-sm px-3 py-1 rounded bg-vibe-cookie text-vibe-brown hover:bg-vibe-brown hover:text-white'><Plus className='h-4 w-4' />Add Size</button>
           </div>
           <div className='space-y-3'>
             {form.sizes.map((s, idx) => (
               <div key={idx} className='grid md:grid-cols-4 gap-3 items-start'>
-                <input className='input' placeholder='Size label (e.g. 100g)' value={s.size} onChange={e=>updateSize(idx,'size',e.target.value)} />
-                <input className='input' placeholder='Price' value={s.price} onChange={e=>updateSize(idx,'price',e.target.value)} />
-                <input className='input' placeholder='Stock' value={s.stock} onChange={e=>updateSize(idx,'stock',e.target.value)} />
+                <input className='input' placeholder='Size label (e.g. 100g)' value={s.size} onChange={e => updateSize(idx, 'size', e.target.value)} />
+                <input className='input' placeholder='Price' value={s.price} onChange={e => updateSize(idx, 'price', e.target.value)} />
+                <input className='input' placeholder='Stock' value={s.stock} onChange={e => updateSize(idx, 'stock', e.target.value)} />
                 <div className='flex items-center'>
-                  {form.sizes.length>1 && <button type='button' onClick={()=>removeSize(idx)} className='px-2 rounded bg-red-100 text-red-700 hover:bg-red-200 h-9'><X className='h-4 w-4'/></button>}
+                  {form.sizes.length > 1 && <button type='button' onClick={() => removeSize(idx)} className='px-2 rounded bg-red-100 text-red-700 hover:bg-red-200 h-9'><X className='h-4 w-4' /></button>}
                 </div>
               </div>
             ))}
@@ -572,23 +535,23 @@ const CreateProductPage = () => {
         </section>
 
         <section className='bg-white border border-vibe-cookie rounded-lg p-6 space-y-4'>
-            <h2 className='text-lg font-semibold text-vibe-brown'>Nutrition</h2>
-            <div className='grid md:grid-cols-5 gap-3'>
-              {Object.keys(form.nutrition).map(key => (
-                <input key={key} className='input' placeholder={key} value={form.nutrition[key]} onChange={e=>updateNutrition(key, e.target.value)} />
-              ))}
-            </div>
+          <h2 className='text-lg font-semibold text-vibe-brown'>Nutrition</h2>
+          <div className='grid md:grid-cols-5 gap-3'>
+            {Object.keys(form.nutrition).map(key => (
+              <input key={key} className='input' placeholder={key} value={form.nutrition[key]} onChange={e => updateNutrition(key, e.target.value)} />
+            ))}
+          </div>
         </section>
 
         <div className='pt-2'>
           <div className='flex items-center gap-4 mb-4'>
             <label className='flex items-center gap-2 text-vibe-brown font-medium'>
-              <input type='checkbox' checked={form.featured} onChange={e=>updateField('featured', e.target.checked)} />
+              <input type='checkbox' checked={form.featured} onChange={e => updateField('featured', e.target.checked)} />
               Featured Product
             </label>
           </div>
           <button disabled={submitting} type='submit' className='px-6 py-3 rounded-md bg-vibe-cookie text-vibe-brown font-semibold hover:bg-vibe-brown hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2'>
-            {submitting && <Loader2 className='h-4 w-4 animate-spin'/>}
+            {submitting && <Loader2 className='h-4 w-4 animate-spin' />}
             {submitting ? 'Creating...' : 'Create Product'}
           </button>
         </div>
