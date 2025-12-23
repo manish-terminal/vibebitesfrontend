@@ -8,6 +8,7 @@ import { buildApiUrl } from '../utils/api'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
 import { useToast } from './Toaster'
+import ProductCard from './ProductCard'
 
 
 
