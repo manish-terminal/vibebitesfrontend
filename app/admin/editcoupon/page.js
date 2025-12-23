@@ -5,6 +5,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { buildApiUrl } from "../../../utils/api";
 
 function EditCouponContent() {
   const router = useRouter();
