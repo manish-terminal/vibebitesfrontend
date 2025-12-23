@@ -89,7 +89,7 @@ const HeroSection = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
-            
+
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 mt-12 max-w-md mx-auto lg:mx-0">
               {slides[currentSlide].stats.map((stat, index) => (
@@ -107,11 +107,11 @@ const HeroSection = () => {
                 src={slides[currentSlide].image}
                 alt={slides[currentSlide].alt}
                 fill
-                className="object-cover transition-all duration-500"
+                className="object-contain transition-all duration-500"
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-vibe-brown/20 to-transparent"></div>
-              
+
               {/* Navigation Arrows - Positioned better for the image */}
               <button
                 onClick={prevSlide}
@@ -128,7 +128,7 @@ const HeroSection = () => {
                 <ChevronRight className="h-5 w-5 lg:h-6 lg:w-6 text-vibe-brown" />
               </button>
             </div>
-            
+
             {/* Floating Elements */}
             <div className="absolute -top-4 -left-4 bg-white rounded-full p-4 shadow-lg">
               <div className="w-16 h-16 bg-vibe-cookie rounded-full flex items-center justify-center">
@@ -136,7 +136,7 @@ const HeroSection = () => {
               </div>
               <div className="text-xs text-vibe-brown mt-1 text-center">Natural</div>
             </div>
-            
+
             <div className="absolute -bottom-4 -right-4 bg-white rounded-full p-4 shadow-lg">
               <div className="w-16 h-16 bg-vibe-cookie rounded-full flex items-center justify-center">
                 <span className="text-vibe-brown font-bold text-sm">0g</span>
@@ -152,11 +152,10 @@ const HeroSection = () => {
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-4 h-4 rounded-full transition-all duration-300 border-2 ${
-                index === currentSlide
+              className={`w-4 h-4 rounded-full transition-all duration-300 border-2 ${index === currentSlide
                   ? 'bg-vibe-cookie border-vibe-cookie scale-125 shadow-lg'
                   : 'bg-transparent border-vibe-brown/40 hover:border-vibe-brown/70 hover:bg-vibe-brown/20'
-              }`}
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}

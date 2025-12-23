@@ -42,7 +42,7 @@ const HeroCarousel = () => {
       try {
         const response = await fetch(buildApiUrl('/admin/banners'));
         const data = await response.json();
-        
+
         if (data.success && data.data && data.data.length > 0) {
           setSlides(data.data);
         }
@@ -94,22 +94,38 @@ const HeroCarousel = () => {
         >
           {slides.map((slide) => (
             <div key={slide.id} className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-screen bg-transparent m-0 p-0">
-              <Image
-                src={slide.image}
-                alt={slide.title}
-                fill
-                style={{ 
-                  objectFit: 'cover',
-                  objectPosition: 'center center',
-                  backgroundColor: 'transparent'
-                }}
-                priority={slide.id === 1}
-                className="w-full h-full"
-                sizes="100vw"
-              />
+              {/* Desktop Image */}
+              <div className="hidden md:block w-full h-full relative">
+                <Image
+                  src={slide.image}
+                  alt={slide.title}
+                  fill
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                  }}
+                  priority={slide.id === 1}
+                  sizes="100vw"
+                />
+              </div>
+
+              {/* Mobile Image */}
+              <div className="block md:hidden w-full h-full relative">
+                <Image
+                  src={slide.mobileImage || slide.image}
+                  alt={slide.title}
+                  fill
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                  }}
+                  priority={slide.id === 1}
+                  sizes="100vw"
+                />
+              </div>
               {/* Subtle gradient overlay for text readability */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/40"></div>
-              
+
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4">
                 <div className="max-w-4xl mx-auto">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{slide.title}</h2>

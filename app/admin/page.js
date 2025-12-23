@@ -4,11 +4,11 @@ import dynamic from 'next/dynamic'
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { 
-  Users, 
-  Package, 
-  ShoppingCart, 
-  TrendingUp, 
+import {
+  Users,
+  Package,
+  ShoppingCart,
+  TrendingUp,
   DollarSign,
   BarChart3,
   Settings,
@@ -30,17 +30,17 @@ import { buildApiUrl } from '../../utils/api'
 // Create error boundary component
 const ErrorBoundary = ({ children, fallback }) => {
   const [hasError, setHasError] = useState(false)
-  
+
   useEffect(() => {
     const handleError = () => setHasError(true)
     window.addEventListener('error', handleError)
     return () => window.removeEventListener('error', handleError)
   }, [])
-  
+
   if (hasError) {
     return fallback || <div>Something went wrong</div>
   }
-  
+
   return children
 }
 
@@ -66,6 +66,7 @@ const AdminPage = () => {
   const [isShippingFeeLoading, setIsShippingFeeLoading] = useState(false)
   const [bannerUploading, setBannerUploading] = useState(false)
   const [bannerUrls, setBannerUrls] = useState(['', '', ''])
+  const [bannerMobileUrls, setBannerMobileUrls] = useState(['', '', ''])
   const [bannerConfigs, setBannerConfigs] = useState([
     { title: 'Bite into Happiness', subtitle: 'Crunchy, healthy, and 100% natural snacks', button: 'Shop Now', link: '/products' },
     { title: 'Taste the Vibe', subtitle: 'Handcrafted snacks that love you back', button: 'Explore Flavors', link: '/products' },
@@ -73,7 +74,7 @@ const AdminPage = () => {
   ])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  
+
   const router = useRouter()
   const { addToast } = useToast()
 
@@ -84,7 +85,7 @@ const AdminPage = () => {
   const fetchWithTimeout = useCallback(async (url, options = {}, timeout = 30000) => {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
-    
+
     try {
       const response = await fetch(url, {
         ...options,
@@ -143,8 +144,8 @@ const AdminPage = () => {
         addToast('Failed to fetch shipping settings', 'error')
       }
     } catch (error) {
-      const errorMessage = error.message?.includes('timeout') 
-        ? 'Request timeout - please try again' 
+      const errorMessage = error.message?.includes('timeout')
+        ? 'Request timeout - please try again'
         : 'Error fetching shipping settings'
       addToast(errorMessage, 'error')
     } finally {
@@ -159,7 +160,7 @@ const AdminPage = () => {
       const response = await fetchWithTimeout(`${API_BASE_URL}/admin/shipping-fee`, {
         method: 'PUT',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           shippingFee: Number(shippingFeeInput),
           freeShippingThreshold: Number(freeShippingThresholdInput)
         })
@@ -182,7 +183,7 @@ const AdminPage = () => {
   }
 
   // Banner upload helper
-  const uploadBanner = async (file, index) => {
+  const uploadBanner = async (file, index, type = 'desktop') => {
     if (!file) return
     if (!file.type.startsWith('image/')) { addToast('Please select an image file', 'error'); return }
     if (file.size > 5 * 1024 * 1024) { addToast('Max 5MB image size', 'error'); return }
@@ -197,12 +198,20 @@ const AdminPage = () => {
       }, 60000) // 60 seconds for file upload
       const data = await response.json()
       if (response.ok && data.success) {
-        setBannerUrls(prev => {
-          const c = [...prev];
-          c[index] = data.data.imageUrl;
-          return c;
-        })
-        addToast('Banner uploaded', 'success')
+        if (type === 'mobile') {
+          setBannerMobileUrls(prev => {
+            const c = [...prev];
+            c[index] = data.data.imageUrl;
+            return c;
+          })
+        } else {
+          setBannerUrls(prev => {
+            const c = [...prev];
+            c[index] = data.data.imageUrl;
+            return c;
+          })
+        }
+        addToast(`${type === 'mobile' ? 'Mobile banner' : 'Banner'} uploaded`, 'success')
       } else {
         addToast(data.message || 'Upload failed', 'error')
       }
@@ -218,6 +227,7 @@ const AdminPage = () => {
     try {
       const banners = bannerUrls.map((url, index) => ({
         image: url || `/images/hero-snack-${index + 1}.jpg`,
+        mobileImage: bannerMobileUrls[index] || url || `/images/hero-snack-${index + 1}.jpg`,
         title: bannerConfigs[index].title,
         subtitle: bannerConfigs[index].subtitle,
         button: bannerConfigs[index].button,
@@ -249,7 +259,7 @@ const AdminPage = () => {
   // Define all API functions first to prevent hoisting issues
   const loadDashboardStats = useCallback(async () => {
     if (!isClient) return;
-    
+
     setIsDashboardLoading(true);
     try {
       console.log('Loading dashboard stats...');
@@ -258,7 +268,7 @@ const AdminPage = () => {
       }, 20000)
 
       console.log('Dashboard response status:', response.status);
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('Dashboard data received:', data)
@@ -275,8 +285,8 @@ const AdminPage = () => {
       }
     } catch (error) {
       console.error('Error loading dashboard stats:', error)
-      const errorMessage = error.message?.includes('timeout') 
-        ? 'Request timeout - please try again' 
+      const errorMessage = error.message?.includes('timeout')
+        ? 'Request timeout - please try again'
         : 'Error loading dashboard data'
       addToast(errorMessage, 'error')
     } finally {
@@ -286,7 +296,7 @@ const AdminPage = () => {
 
   const loadUsers = useCallback(async () => {
     if (!isClient) return;
-    
+
     try {
       const params = new URLSearchParams({
         page: currentPage,
@@ -312,7 +322,7 @@ const AdminPage = () => {
 
   const loadProducts = useCallback(async () => {
     if (!isClient) return;
-    
+
     try {
       const params = new URLSearchParams({
         page: currentPage,
@@ -338,7 +348,7 @@ const AdminPage = () => {
 
   const loadOrders = useCallback(async () => {
     if (!isClient) return;
-    
+
     try {
       let statusParam = filterStatus
 
@@ -368,7 +378,7 @@ const AdminPage = () => {
 
   const loadCoupons = useCallback(async () => {
     if (!isClient) return;
-    
+
     try {
       const params = new URLSearchParams({
         page: currentPage,
@@ -393,7 +403,7 @@ const AdminPage = () => {
 
   const loadReviews = useCallback(async () => {
     if (!isClient) return;
-    
+
     try {
       const params = new URLSearchParams({
         page: currentPage,
@@ -419,7 +429,7 @@ const AdminPage = () => {
   // Authentication check effect
   useEffect(() => {
     if (!isClient) return
-    
+
     const checkAuth = async () => {
       try {
         // Get token from localStorage
@@ -427,7 +437,7 @@ const AdminPage = () => {
           router.push('/login')
           return
         }
-        
+
         const token = localStorage.getItem('token')
         if (!token) {
           router.push('/login')
@@ -440,7 +450,7 @@ const AdminPage = () => {
             'Content-Type': 'application/json'
           }
         }, 15000)
-        
+
         if (!response.ok) {
           // Handle different error statuses
           if (response.status === 500) {
@@ -448,7 +458,7 @@ const AdminPage = () => {
           } else if (response.status === 401) {
             addToast('Your session has expired. Please login again.', 'error')
           }
-          
+
           // Clear token and redirect to login
           if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             localStorage.removeItem('token')
@@ -457,7 +467,7 @@ const AdminPage = () => {
           router.push('/login')
           return
         }
-        
+
         const data = await response.json()
         if (data.success) {
           const role = data.data.role || data.data.user?.role
@@ -667,7 +677,7 @@ Verified: ${review.verified ? 'Yes' : 'No'}
               <h1 className="text-2xl font-bold text-vibe-brown">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-            <button
+              <button
                 onClick={() => router.push('/')}
                 className="flex items-center space-x-2 text-vibe-brown hover:text-vibe-cookie transition-colors"
                 title="Go to Home Page"
@@ -676,7 +686,7 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                 <span>Home</span>
               </button>
               <span className="text-vibe-brown">Welcome, {user?.firstName}</span>
-              
+
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 text-vibe-brown hover:text-vibe-cookie transition-colors"
@@ -693,73 +703,72 @@ Verified: ${review.verified ? 'Yes' : 'No'}
         {/* Navigation Tabs */}
         <div className="bg-white rounded-lg p-1 shadow-sm mb-8">
           <div className="flex space-x-1 justify-center flex-wrap gap-1">
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-            { id: 'users', label: 'Users', icon: Users },
-            { id: 'products', label: 'Products', icon: Package },
-            { id: 'orders', label: 'Orders', icon: ShoppingCart },
-            { id: 'coupons', label: 'Coupons', icon: TrendingUp },
-            { id: 'reviews', label: 'Reviews', icon: Eye },
-            { id: 'categories', label: 'Categories', icon: Plus },
-            { id: 'announcements', label: 'Announcements', icon: AlertCircle },
-            { id: 'settings', label: 'Settings', icon: Settings }
-          ].map((tab) => {
-            const Icon = tab.icon
-            if (tab.id === 'categories') {
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+              { id: 'users', label: 'Users', icon: Users },
+              { id: 'products', label: 'Products', icon: Package },
+              { id: 'orders', label: 'Orders', icon: ShoppingCart },
+              { id: 'coupons', label: 'Coupons', icon: TrendingUp },
+              { id: 'reviews', label: 'Reviews', icon: Eye },
+              { id: 'categories', label: 'Categories', icon: Plus },
+              { id: 'announcements', label: 'Announcements', icon: AlertCircle },
+              { id: 'settings', label: 'Settings', icon: Settings }
+            ].map((tab) => {
+              const Icon = tab.icon
+              if (tab.id === 'categories') {
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => router.push('/admin/addcategory')}
+                    className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md transition-colors text-vibe-brown hover:bg-gray-100 whitespace-nowrap`}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">{tab.label}</span>
+                  </button>
+                )
+              }
+              if (tab.id === 'announcements') {
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => router.push('/admin/announcements')}
+                    className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md transition-colors text-vibe-brown hover:bg-gray-100 whitespace-nowrap`}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">{tab.label}</span>
+                  </button>
+                )
+              }
               return (
                 <button
                   key={tab.id}
-                  onClick={() => router.push('/admin/addcategory')}
-                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md transition-colors text-vibe-brown hover:bg-gray-100 whitespace-nowrap`}
+                  onClick={() => {
+                    setActiveTab(tab.id)
+                    setCurrentPage(1)
+                    setSearchQuery('')
+                    setFilterStatus('')
+                  }}
+                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap ${activeTab === tab.id
+                      ? 'bg-vibe-cookie text-vibe-brown'
+                      : 'text-vibe-brown hover:bg-gray-100'
+                    }`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
                   <span className="text-xs sm:text-sm">{tab.label}</span>
                 </button>
               )
-            }
-            if (tab.id === 'announcements') {
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => router.push('/admin/announcements')}
-                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md transition-colors text-vibe-brown hover:bg-gray-100 whitespace-nowrap`}
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-xs sm:text-sm">{tab.label}</span>
-                </button>
-              )
-            }
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id)
-                  setCurrentPage(1)
-                  setSearchQuery('')
-                  setFilterStatus('')
-                }}
-                className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'bg-vibe-cookie text-vibe-brown'
-                    : 'text-vibe-brown hover:bg-gray-100'
-                }`}
-              >
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span className="text-xs sm:text-sm">{tab.label}</span>
-              </button>
-            )
-          })}
+            })}
           </div>
         </div>
         {/* Settings Tab - Shipping Settings Management */}
         {activeTab === 'settings' && (
           <div className="space-y-6 w-full">
             <h2 className="text-2xl font-bold text-vibe-brown mb-4">Store Settings</h2>
-            
+
             {/* Shipping Settings */}
             <div className="bg-white rounded-lg shadow-sm border border-vibe-cookie p-6 overflow-hidden">
               <h3 className="text-lg font-semibold text-vibe-brown mb-4">Shipping Settings</h3>
-              
+
               <div className="space-y-4">
                 {/* Shipping Fee */}
                 <div>
@@ -823,7 +832,7 @@ Verified: ${review.verified ? 'Yes' : 'No'}
             <div className="bg-white rounded-lg shadow-sm border border-vibe-cookie p-6">
               <h3 className="text-lg font-semibold text-vibe-brown mb-4">Homepage Banners</h3>
               <p className="text-sm text-vibe-brown/70 mb-4">Upload banner images and configure their content. Changes will be visible on the homepage immediately after saving.</p>
-              
+
               {/* Image Specifications Guide */}
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
                 <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center flex-wrap">
@@ -848,92 +857,110 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                   </ul>
                 </div>
               </div>
-              {[0,1,2].map((i) => (
+              {[0, 1, 2].map((i) => (
                 <div key={i} className="mb-6 p-4 border border-vibe-cookie rounded-lg">
-                  <h4 className="text-md font-medium text-vibe-brown mb-3">Banner #{i+1}</h4>
-                  
+                  <h4 className="text-md font-medium text-vibe-brown mb-3">Banner #{i + 1}</h4>
+
                   {/* Image Upload */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-vibe-brown mb-2">Image</label>
-                    <div className="flex items-center gap-3">
-                      <input id={`banner-upload-${i}`} type="file" accept="image/*" className="hidden" onChange={(e)=>uploadBanner(e.target.files?.[0], i)} disabled={bannerUploading} />
-                      <label htmlFor={`banner-upload-${i}`} className={`px-4 py-2 border-2 border-dashed rounded-md cursor-pointer ${bannerUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>{bannerUploading ? 'Uploading...' : 'Upload image'}</label>
-                      <input type="text" value={bannerUrls[i]} readOnly className="flex-1 px-3 py-2 border border-vibe-cookie rounded-md text-sm" placeholder="Image URL will appear here after upload" />
-                      {bannerUrls[i] && (
-                        <a href={bannerUrls[i]} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">View</a>
-                      )}
+                  <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-vibe-brown mb-2">Desktop Image</label>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          <input id={`banner-upload-${i}`} type="file" accept="image/*" className="hidden" onChange={(e) => uploadBanner(e.target.files?.[0], i, 'desktop')} disabled={bannerUploading} />
+                          <label htmlFor={`banner-upload-${i}`} className={`px-4 py-2 border-2 border-dashed rounded-md cursor-pointer ${bannerUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>{bannerUploading ? 'Uploading...' : 'Upload Desktop'}</label>
+                        </div>
+                        <input type="text" value={bannerUrls[i]} readOnly className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm" placeholder="Desktop URL" />
+                        {bannerUrls[i] && (
+                          <a href={bannerUrls[i]} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">View Desktop Image</a>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-vibe-brown mb-2">Mobile Image</label>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          <input id={`banner-mobile-upload-${i}`} type="file" accept="image/*" className="hidden" onChange={(e) => uploadBanner(e.target.files?.[0], i, 'mobile')} disabled={bannerUploading} />
+                          <label htmlFor={`banner-mobile-upload-${i}`} className={`px-4 py-2 border-2 border-dashed rounded-md cursor-pointer ${bannerUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>{bannerUploading ? 'Uploading...' : 'Upload Mobile'}</label>
+                        </div>
+                        <input type="text" value={bannerMobileUrls[i]} readOnly className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm" placeholder="Mobile URL" />
+                        {bannerMobileUrls[i] && (
+                          <a href={bannerMobileUrls[i]} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">View Mobile Image</a>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {/* Title */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-vibe-brown mb-2">Title</label>
-                    <input 
-                      type="text" 
-                      value={bannerConfigs[i].title} 
+                    <input
+                      type="text"
+                      value={bannerConfigs[i].title}
                       onChange={(e) => setBannerConfigs(prev => {
                         const c = [...prev];
                         c[i] = { ...c[i], title: e.target.value };
                         return c;
                       })}
-                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm" 
-                      placeholder="Enter banner title" 
+                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm"
+                      placeholder="Enter banner title"
                     />
                   </div>
 
                   {/* Subtitle */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-vibe-brown mb-2">Subtitle</label>
-                    <input 
-                      type="text" 
-                      value={bannerConfigs[i].subtitle} 
+                    <input
+                      type="text"
+                      value={bannerConfigs[i].subtitle}
                       onChange={(e) => setBannerConfigs(prev => {
                         const c = [...prev];
                         c[i] = { ...c[i], subtitle: e.target.value };
                         return c;
                       })}
-                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm" 
-                      placeholder="Enter banner subtitle" 
+                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm"
+                      placeholder="Enter banner subtitle"
                     />
                   </div>
 
                   {/* Button Text */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-vibe-brown mb-2">Button Text</label>
-                    <input 
-                      type="text" 
-                      value={bannerConfigs[i].button} 
+                    <input
+                      type="text"
+                      value={bannerConfigs[i].button}
                       onChange={(e) => setBannerConfigs(prev => {
                         const c = [...prev];
                         c[i] = { ...c[i], button: e.target.value };
                         return c;
                       })}
-                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm" 
-                      placeholder="Enter button text" 
+                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm"
+                      placeholder="Enter button text"
                     />
                   </div>
 
                   {/* Link */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-vibe-brown mb-2">Link</label>
-                    <input 
-                      type="text" 
-                      value={bannerConfigs[i].link} 
+                    <input
+                      type="text"
+                      value={bannerConfigs[i].link}
                       onChange={(e) => setBannerConfigs(prev => {
                         const c = [...prev];
                         c[i] = { ...c[i], link: e.target.value };
                         return c;
                       })}
-                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm" 
-                      placeholder="Enter link (e.g., /products)" 
+                      className="w-full px-3 py-2 border border-vibe-cookie rounded-md text-sm"
+                      placeholder="Enter link (e.g., /products)"
                     />
                   </div>
                 </div>
               ))}
-              
+
               {/* Save Button */}
               <div className="flex justify-end">
-                <button 
+                <button
                   onClick={saveBannerConfig}
                   className="px-6 py-2 bg-vibe-cookie text-vibe-brown font-semibold rounded-md hover:bg-vibe-accent transition-colors duration-300"
                 >
@@ -1001,62 +1028,61 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                         <p className="text-2xl font-bold text-vibe-brown">₹{(dashboardStats.stats?.totalRevenue || 0).toLocaleString()}</p>
                       </div>
                     </div>
-              </div>
-            </div>
+                  </div>
+                </div>
 
-            {/* Recent Orders */}
-            <div className="bg-white rounded-lg shadow-sm border border-vibe-cookie">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-vibe-brown">Recent Orders</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {dashboardStats.recentOrders && dashboardStats.recentOrders.length > 0 ? (
-                      dashboardStats.recentOrders.map((order) => (
-                        <tr key={order._id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-vibe-brown font-medium">{order.orderNumber || order._id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {order.user?.firstName} {order.user?.lastName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{order.total || 0}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
-                              order.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              order.orderStatus === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                              order.orderStatus === 'processing' ? 'bg-purple-100 text-purple-800' :
-                              order.orderStatus === 'shipped' ? 'bg-indigo-100 text-indigo-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {order.orderStatus}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </td>
+                {/* Recent Orders */}
+                <div className="bg-white rounded-lg shadow-sm border border-vibe-cookie">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-medium text-vibe-brown">Recent Orders</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
-                          No recent orders found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {dashboardStats.recentOrders && dashboardStats.recentOrders.length > 0 ? (
+                          dashboardStats.recentOrders.map((order) => (
+                            <tr key={order._id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-vibe-brown font-medium">{order.orderNumber || order._id}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {order.user?.firstName} {order.user?.lastName}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{order.total || 0}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                    order.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                      order.orderStatus === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                                        order.orderStatus === 'processing' ? 'bg-purple-100 text-purple-800' :
+                                          order.orderStatus === 'shipped' ? 'bg-indigo-100 text-indigo-800' :
+                                            'bg-gray-100 text-gray-800'
+                                  }`}>
+                                  {order.orderStatus}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                              No recent orders found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </>
             ) : (
               <div className="flex items-center justify-center min-h-64">
@@ -1115,20 +1141,18 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.phone || '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
                             {user.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button
                             onClick={() => handleUserStatusToggle(user._id, user.isActive)}
-                            className={`px-3 py-1 rounded-md text-xs font-medium ${
-                              user.isActive
+                            className={`px-3 py-1 rounded-md text-xs font-medium ${user.isActive
                                 ? 'bg-red-100 text-red-800 hover:bg-red-200'
                                 : 'bg-green-100 text-green-800 hover:bg-green-200'
-                            }`}
+                              }`}
                           >
                             {user.isActive ? 'Deactivate' : 'Activate'}
                           </button>
@@ -1183,9 +1207,9 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {products.map((product) => {
-                      const min = product.minPrice ?? (product.sizes?.length ? Math.min(...product.sizes.map(s=>s.price)) : 0)
-                      const max = product.maxPrice ?? (product.sizes?.length ? Math.max(...product.sizes.map(s=>s.price)) : 0)
-                      const stock = product.totalStock ?? (product.sizes?.length ? product.sizes.reduce((t,s)=>t + (s.stock||0),0) : 0)
+                      const min = product.minPrice ?? (product.sizes?.length ? Math.min(...product.sizes.map(s => s.price)) : 0)
+                      const max = product.maxPrice ?? (product.sizes?.length ? Math.max(...product.sizes.map(s => s.price)) : 0)
+                      const stock = product.totalStock ?? (product.sizes?.length ? product.sizes.reduce((t, s) => t + (s.stock || 0), 0) : 0)
                       return (
                         <tr key={product._id}>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -1200,7 +1224,7 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.category}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{min}{max !== min ? ` - ₹${max}`: ''}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{min}{max !== min ? ` - ₹${max}` : ''}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                               {stock > 0 ? `${stock} in stock` : 'Out of stock'}
@@ -1211,7 +1235,8 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                             <button onClick={() => handleDelete('products', product._id)} className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 rounded-md text-xs font-medium">Delete</button>
                           </td>
                         </tr>
-                      )})}
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1274,14 +1299,13 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{order.total}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="space-y-1">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
-                              order.orderStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                              order.orderStatus === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                              order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
-                              order.orderStatus === 'returned' ? 'bg-purple-100 text-purple-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                order.orderStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                  order.orderStatus === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                                    order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                      order.orderStatus === 'returned' ? 'bg-purple-100 text-purple-800' :
+                                        'bg-gray-100 text-gray-800'
+                              }`}>
                               {order.orderStatus}
                             </span>
                           </div>
@@ -1294,44 +1318,44 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                             <div className="flex space-x-2">
                               {/* Status dropdown */}
                               <select
-                                  value={order.orderStatus}
-                                  onChange={(e) => handleOrderStatusUpdate(order._id, e.target.value)}
-                                  className="px-2 py-1 border border-vibe-cookie rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-vibe-cookie"
-                                >
-                                  {order.orderStatus === 'pending' && (
-                                    <>
-                                      <option value="pending">Pending</option>
-                                      <option value="processing">Processing</option>
-                                      <option value="cancelled">Cancelled</option>
-                                    </>
-                                  )}
-                                  {order.orderStatus === 'processing' && (
-                                    <>
-                                      <option value="processing">Processing</option>
-                                      <option value="shipped">Shipped</option>
-                                      <option value="cancelled">Cancelled</option>
-                                    </>
-                                  )}
-                                  {order.orderStatus === 'shipped' && (
-                                    <>
-                                      <option value="shipped">Shipped</option>
-                                      <option value="delivered">Delivered</option>
-                                    </>
-                                  )}
-                                  {order.orderStatus === 'delivered' && (
-                                    <>
-                                      <option value="delivered">Delivered</option>
-                                      <option value="returned">Returned</option>
-                                    </>
-                                  )}
-                                  {order.orderStatus === 'cancelled' && (
+                                value={order.orderStatus}
+                                onChange={(e) => handleOrderStatusUpdate(order._id, e.target.value)}
+                                className="px-2 py-1 border border-vibe-cookie rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-vibe-cookie"
+                              >
+                                {order.orderStatus === 'pending' && (
+                                  <>
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
                                     <option value="cancelled">Cancelled</option>
-                                  )}
-                                  {order.orderStatus === 'returned' && (
+                                  </>
+                                )}
+                                {order.orderStatus === 'processing' && (
+                                  <>
+                                    <option value="processing">Processing</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="cancelled">Cancelled</option>
+                                  </>
+                                )}
+                                {order.orderStatus === 'shipped' && (
+                                  <>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="delivered">Delivered</option>
+                                  </>
+                                )}
+                                {order.orderStatus === 'delivered' && (
+                                  <>
+                                    <option value="delivered">Delivered</option>
                                     <option value="returned">Returned</option>
-                                  )}
-                                </select>
-                              
+                                  </>
+                                )}
+                                {order.orderStatus === 'cancelled' && (
+                                  <option value="cancelled">Cancelled</option>
+                                )}
+                                {order.orderStatus === 'returned' && (
+                                  <option value="returned">Returned</option>
+                                )}
+                              </select>
+
                               <button
                                 className="px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-md text-xs font-medium"
                                 onClick={() => router.push(`/track-order?orderId=${order.orderNumber || order._id}`)}
@@ -1339,8 +1363,8 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                                 Track
                               </button>
                             </div>
-                            
-                            
+
+
                           </div>
                         </td>
                       </tr>
@@ -1356,11 +1380,11 @@ Verified: ${review.verified ? 'Yes' : 'No'}
         {activeTab === 'coupons' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-vibe-brown">Coupon Management</h2>
-                <a href="/admin/addcoupon" className="flex items-center space-x-2 bg-vibe-cookie text-vibe-brown px-4 py-2 rounded-md hover:bg-vibe-brown hover:text-white transition-colors">
-                  <Plus className="h-5 w-5" />
-                  <span>Add Coupon</span>
-                </a>
+              <h2 className="text-2xl font-bold text-vibe-brown">Coupon Management</h2>
+              <a href="/admin/addcoupon" className="flex items-center space-x-2 bg-vibe-cookie text-vibe-brown px-4 py-2 rounded-md hover:bg-vibe-brown hover:text-white transition-colors">
+                <Plus className="h-5 w-5" />
+                <span>Add Coupon</span>
+              </a>
             </div>
 
             <div className="flex space-x-4">
@@ -1400,9 +1424,8 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                           {coupon.usedCount || 0} / {coupon.usageLimit === -1 ? '∞' : coupon.usageLimit}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            coupon.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${coupon.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
                             {coupon.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
@@ -1494,9 +1517,8 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                             {[...Array(5)].map((_, i) => (
                               <span
                                 key={i}
-                                className={`text-lg ${
-                                  i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                                }`}
+                                className={`text-lg ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                                  }`}
                               >
                                 ★
                               </span>
@@ -1508,9 +1530,8 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                           {review.title}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            review.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${review.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
                             {review.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
@@ -1519,11 +1540,10 @@ Verified: ${review.verified ? 'Yes' : 'No'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button
-                            className={`px-3 py-1 rounded-md text-xs font-medium ${
-                              review.isActive 
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200' 
+                            className={`px-3 py-1 rounded-md text-xs font-medium ${review.isActive
+                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
                                 : 'bg-green-100 text-green-800 hover:bg-green-200'
-                            }`}
+                              }`}
                             onClick={() => handleReviewStatusToggle(review.id, !review.isActive)}
                           >
                             {review.isActive ? 'Deactivate' : 'Activate'}
@@ -1555,24 +1575,23 @@ Verified: ${review.verified ? 'Yes' : 'No'}
               >
                 Previous
               </button>
-              
+
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const page = i + 1
                 return (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md ${
-                      currentPage === page
+                    className={`px-3 py-2 text-sm font-medium rounded-md ${currentPage === page
                         ? 'bg-vibe-cookie text-vibe-brown'
                         : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>
                 )
               })}
-              
+
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
@@ -1591,14 +1610,14 @@ Verified: ${review.verified ? 'Yes' : 'No'}
 // Wrap the component with error boundary
 const AdminPageWithErrorBoundary = () => {
   return (
-    <ErrorBoundary 
+    <ErrorBoundary
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-vibe-bg text-vibe-brown">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
             <p className="mb-4">Please refresh the page or try again later.</p>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="px-4 py-2 bg-vibe-brown text-white rounded-md hover:bg-opacity-90"
             >
               Refresh Page
