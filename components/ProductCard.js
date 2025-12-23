@@ -19,17 +19,19 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
   const { addToCart } = useCart()
   const { addToast } = useToast()
   const { addToWishlist, removeFromWishlist, items: wishlistItems } = useWishlist()
-  
+
+  const productId = product.id || product._id
+
   // Check if product is in wishlist
-  const isInWishlist = wishlistItems.some(item => item.id === product.id)
+  const isInWishlist = wishlistItems.some(item => item.id === productId)
 
   // Get all product images
   const allImages = product.images && Array.isArray(product.images) && product.images.length > 0
     ? product.images.filter(img => img && img.trim())
-    : product.image 
+    : product.image
       ? [product.image]
       : ['/images/hero-snack-1.jpg']
-  
+
   const totalImages = allImages.length
 
   // Auto-play carousel
@@ -68,12 +70,12 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
 
   const handleWishlistToggle = () => {
     if (isInWishlist) {
-      removeFromWishlist(product.id)
+      removeFromWishlist(productId)
       addToast(`${product.name} removed from wishlist`, 'success')
     } else {
-      addToWishlist({ 
-        id: product.id, 
-        name: product.name, 
+      addToWishlist({
+        id: productId,
+        name: product.name,
         image: product.image,
         price: selectedSizeObj.price || product.sizes[0]?.price || 0
       })
@@ -88,7 +90,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
       <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
         <div className="flex flex-col md:flex-row">
           {/* Product Image */}
-          <Link href={`/product/${product.id}`} className="relative w-full md:w-64 h-64 md:h-auto flex-shrink-0">
+          <Link href={`/product/${productId}`} className="relative w-full md:w-64 h-64 md:h-auto flex-shrink-0">
             {showVideo && product.video ? (
               <video
                 src={product.video}
@@ -102,8 +104,8 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
               <div className="relative w-full h-full bg-transparent">
                 <SafeImage
                   src={allImages[carouselIdx]}
-                alt={product.name}
-                fill
+                  alt={product.name}
+                  fill
                   fallback="/images/hero-snack-1.jpg"
                   className="object-cover transition-opacity duration-500"
                   style={{ backgroundColor: 'transparent' }}
@@ -114,11 +116,10 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                     {allImages.map((_, idx) => (
                       <div
                         key={idx}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                          carouselIdx === idx 
-                            ? 'bg-white w-4' 
-                            : 'bg-white/50 w-1.5'
-                        }`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${carouselIdx === idx
+                          ? 'bg-white w-4'
+                          : 'bg-white/50 w-1.5'
+                          }`}
                       />
                     ))}
                   </div>
@@ -126,22 +127,21 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
               </div>
             )}
             <div className="absolute top-4 right-4">
-              <button 
+              <button
                 onClick={handleWishlistToggle}
                 className="p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
               >
-                <Heart 
-                  className={`h-5 w-5 transition-colors ${
-                    isInWishlist 
-                      ? 'text-red-500 fill-current' 
-                      : 'text-vibe-brown hover:text-red-500'
-                  }`} 
+                <Heart
+                  className={`h-5 w-5 transition-colors ${isInWishlist
+                    ? 'text-red-500 fill-current'
+                    : 'text-vibe-brown hover:text-red-500'
+                    }`}
                 />
               </button>
             </div>
             {product.featured && (
               <div className="absolute top-4 left-4">
-            <div className="flex items-center bg-vibe-cookie text-vibe-brown px-2 py-1 rounded-full text-xs font-semibold">
+                <div className="flex items-center bg-vibe-cookie text-vibe-brown px-2 py-1 rounded-full text-xs font-semibold">
                   <Star className="h-3 w-3 fill-current mr-1" />
                   Featured
                 </div>
@@ -169,13 +169,13 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                 {product.category}
               </span>
             </div>
-            
-            <Link href={`/product/${product.id}`} className="block">
+
+            <Link href={`/product/${productId}`} className="block">
               <h3 className="text-xl font-semibold text-vibe-brown mb-2 hover:text-vibe-cookie transition-colors">
                 {product.name}
               </h3>
             </Link>
-            
+
             <p className="text-vibe-brown/70 mb-4">
               {product.description}
             </p>
@@ -190,11 +190,10 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                   <button
                     key={size.size}
                     onClick={() => setSelectedSize(size.size)}
-                    className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                      selectedSize === size.size
-                        ? 'bg-vibe-cookie text-vibe-brown border-vibe-cookie'
-                        : 'border-vibe-cookie/30 text-vibe-brown hover:border-vibe-cookie'
-                    }`}
+                    className={`px-3 py-1 text-sm rounded-full border transition-colors ${selectedSize === size.size
+                      ? 'bg-vibe-cookie text-vibe-brown border-vibe-cookie'
+                      : 'border-vibe-cookie/30 text-vibe-brown hover:border-vibe-cookie'
+                      }`}
                     disabled={size.stock === 0}
                   >
                     {size.size} {size.stock === 0 && <span className="text-red-500 ml-1">(Out of Stock)</span>}
@@ -254,7 +253,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
       {/* Product Image */}
-      <Link href={`/product/${product.id}`} className="relative h-64 overflow-hidden block">
+      <Link href={`/product/${productId}`} className="relative h-64 overflow-hidden block">
         {showVideo && product.video ? (
           <video
             src={product.video}
@@ -268,8 +267,8 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
           <div className="relative w-full h-full bg-transparent">
             <SafeImage
               src={allImages[carouselIdx]}
-            alt={product.name}
-            fill
+              alt={product.name}
+              fill
               fallback="/images/hero-snack-1.jpg"
               className="object-cover group-hover:scale-105 transition-all duration-500"
               style={{ backgroundColor: 'transparent' }}
@@ -280,11 +279,10 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                 {allImages.map((_, idx) => (
                   <div
                     key={idx}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      carouselIdx === idx 
-                        ? 'bg-white w-4' 
-                        : 'bg-white/50 w-1.5'
-                    }`}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${carouselIdx === idx
+                      ? 'bg-white w-4'
+                      : 'bg-white/50 w-1.5'
+                      }`}
                   />
                 ))}
               </div>
@@ -292,16 +290,15 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
           </div>
         )}
         <div className="absolute top-4 right-4">
-          <button 
+          <button
             onClick={handleWishlistToggle}
             className="p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
           >
-            <Heart 
-              className={`h-5 w-5 transition-colors ${
-                isInWishlist 
-                  ? 'text-red-500 fill-current' 
-                  : 'text-vibe-brown hover:text-red-500'
-              }`} 
+            <Heart
+              className={`h-5 w-5 transition-colors ${isInWishlist
+                ? 'text-red-500 fill-current'
+                : 'text-vibe-brown hover:text-red-500'
+                }`}
             />
           </button>
         </div>
@@ -335,17 +332,17 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
             {product.category}
           </span>
         </div>
-        
-        <Link href={`/product/${product.id}`}>
+
+        <Link href={`/product/${productId}`}>
           <h3 className="text-lg font-semibold text-vibe-brown mb-2 hover:text-vibe-cookie transition-colors">
             {product.name}
           </h3>
         </Link>
-        
+
         <p className="text-sm text-vibe-brown/70 mb-4 line-clamp-2">
           {product.description}
         </p>
-        
+
 
         {/* Size Selector */}
         <div className="mb-4">
@@ -357,11 +354,10 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
               <button
                 key={size.size}
                 onClick={() => setSelectedSize(size.size)}
-                className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                  selectedSize === size.size
-                    ? 'bg-vibe-cookie text-vibe-brown border-vibe-cookie'
-                    : 'border-vibe-cookie/30 text-vibe-brown hover:border-vibe-cookie'
-                }`}
+                className={`px-3 py-1 text-sm rounded-full border transition-colors ${selectedSize === size.size
+                  ? 'bg-vibe-cookie text-vibe-brown border-vibe-cookie'
+                  : 'border-vibe-cookie/30 text-vibe-brown hover:border-vibe-cookie'
+                  }`}
               >
                 {size.size}
               </button>
@@ -379,7 +375,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
               / {selectedSize}
             </span>
           </div>
-          
+
           <button
             onClick={handleAddToCart}
             className="flex items-center justify-center px-4 py-2 bg-vibe-cookie text-vibe-brown rounded-full hover:bg-vibe-accent transition-colors"
