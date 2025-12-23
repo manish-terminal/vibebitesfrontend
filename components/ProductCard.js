@@ -107,7 +107,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                   alt={product.name}
                   fill
                   fallback="/images/hero-snack-1.jpg"
-                  className="object-cover transition-opacity duration-500"
+                  className="object-contain transition-opacity duration-500"
                   style={{ backgroundColor: 'transparent' }}
                 />
                 {/* Carousel Indicators */}
@@ -270,7 +270,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
               alt={product.name}
               fill
               fallback="/images/hero-snack-1.jpg"
-              className="object-cover group-hover:scale-105 transition-all duration-500"
+              className="object-contain group-hover:scale-105 transition-all duration-500"
               style={{ backgroundColor: 'transparent' }}
             />
             {/* Carousel Indicators */}
